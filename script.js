@@ -223,18 +223,77 @@ document.addEventListener('DOMContentLoaded', function() {
     // Start the typing effect after a short delay
     setTimeout(typeWriter, 500);
 
-    // The contact form is now handled by Formspree
-    // No need to prevent default form submission
+    // Testimonial Read More/Less functionality
+    const testimonialToggles = document.querySelectorAll('.testimonial-toggle');
+    
+    testimonialToggles.forEach(toggle => {
+        toggle.addEventListener('click', function() {
+            const testimonialContent = this.closest('.testimonial-content');
+            const fullText = testimonialContent.querySelector('.testimonial-full');
+            
+            if (fullText.style.display === 'none') {
+                fullText.style.display = 'block';
+                this.textContent = 'Read Less';
+            } else {
+                fullText.style.display = 'none';
+                this.textContent = 'Read More';
+            }
+        });
+    });
+
+    // Handle Formspree form submission with custom redirect to GitHub Pages URL
     const contactForm = document.getElementById('contact-form');
+    
     if (contactForm) {
-        // Add loading state when form is submitted
-        contactForm.addEventListener('submit', function() {
+        contactForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show loading state
             const submitBtn = document.querySelector('.submit-btn');
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
             submitBtn.disabled = true;
             
-            // Form will be submitted to Formspree which will send the email
-            // The page will redirect to the thank you page specified in the form's _next parameter
+            // Get form data
+            const formData = new FormData(contactForm);
+            
+            // Send form data to Formspree
+            fetch(contactForm.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // Redirect to thanks.html page on successful submission
+                    // Use the GitHub Pages URL
+                    window.location.href = 'https://ifeanyisam.github.io/portfolio-website/thanks.html';
+                } else {
+                    // Handle error
+                    response.json().then(data => {
+                        if (Object.hasOwn(data, 'errors')) {
+                            const errorMsg = data["errors"].map(error => error["message"]).join(", ");
+                            alert("Form submission failed: " + errorMsg);
+                        } else {
+                            alert("Oops! There was a problem submitting your form");
+                        }
+                        
+                        // Reset button
+                        submitBtn.innerHTML = 'Send Message';
+                        submitBtn.disabled = false;
+                    });
+                }
+            })
+            .catch(error => {
+                // Handle network error
+                console.error('Error:', error);
+                alert("Oops! There was a network problem. Please try again.");
+                
+                // Reset button
+                submitBtn.innerHTML = 'Send Message';
+                submitBtn.disabled = false;
+            });
         });
     }
 
@@ -315,21 +374,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     console.log('Portfolio loaded successfully with theme support');
-});   
- // Testimonial Read More/Less functionality
-    const testimonialToggles = document.querySelectorAll('.testimonial-toggle');
-    
-    testimonialToggles.forEach(toggle => {
-        toggle.addEventListener('click', function() {
-            const testimonialContent = this.closest('.testimonial-content');
-            const fullText = testimonialContent.querySelector('.testimonial-full');
-            
-            if (fullText.style.display === 'none') {
-                fullText.style.display = 'block';
-                this.textContent = 'Read Less';
-            } else {
-                fullText.style.display = 'none';
-                this.textContent = 'Read More';
-            }
-        });
-    });
+});
